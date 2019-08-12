@@ -22,6 +22,8 @@ settings=%A_ScriptDir%\options.png
 pintoggle:=1
 loadtoggle:=1
 optiontoggle:=1
+tipstaytimercheck:=0
+coordinatetoggle:=0
 
 ;--------------------GUI--------------------
 Gui, 1:Add, Text, x18 y3, Name:
@@ -99,42 +101,66 @@ WinGetPos, martix, martiy,,, MARTI
 newx:=martix+903
 newy:=martiy+25
 Gui, 2:show, NoActivate x%newx% y%newy% w%gui2w% h%gui2h%, Fetcher
-
 Return
+
+tipstaytimer:
+Loop {
+	MouseGetPos, mousex, mousey
+	ToolTip, %tiptodisplay%, (mousex+10), (mousey+10)
+	if GetKeyState("LButton") {
+		coordinatetoggle:=!coordinatetoggle
+		goto tipstay
+	}
+	Continue
+}
+return
 
 ;--------------------LABELS--------------------
 new:
-msgbox, 4, Confirm Choice, Are you sure (This will clear ALL fields)?
-IfMsgBox, Yes 
-{
-	GuiControl, 1:, name, 
-	GuiControl, 1:, id, 
-	GuiControl, 1:, number, 
-	GuiControl, 1:, altnumber, 
-	GuiControl, 1:, email, 
-	GuiControl, 1:, altemail, 
-	GuiControl, 1:, location, 
-	GuiControl, 1:, altlocation, 
-	GuiControl, 1:, manager, 
-	GuiControl, 1:, hr, 
-	GuiControl, 1:, computer, 
-	
-	GuiControl, 1:, printer,
-	GuiControl, 1:, server,
-	GuiControl, 1:, screenshot, 0
-	GuiControl, 1:, access,
-	GuiControl, 1: Choose, Access, 3
-	GuiControl, 1:, when, Unknown
-	GuiControl, 1: Disable, when,
-	GuiControl, 1:, affecteduser,
-	GuiControl, 1:, errormessage, 
-	GuiControl, 1:, affected,
-	GuiControl, 1:, requester,
-	GuiControl, 1: Choose, relist, 1
-	GuiControl, 1:, requesting,
-	GuiControl, 1:, notepad,
-} else 
-	Return
+MouseGetPos, mousex, mousey
+newx:=mousex-93
+newy:=mousey-58
+Gui, 3:Add, Button, x20 y40 w60 h30 gyes, Yes
+Gui, 3:Add, Button, x100 y40 w60 h30 gno, No
+Gui, 3:Add, Text, x50 y10, Clear ALL Fields?
+Gui, 3:-Border
+Gui, 3:show, x%newx% y%newy% w175 h75, Confirm
+Winset, Alwaysontop,, Confirm
+Return
+
+yes:
+GuiControl, 1:, name, 
+GuiControl, 1:, id, 
+GuiControl, 1:, number, 
+GuiControl, 1:, altnumber, 
+GuiControl, 1:, email, 
+GuiControl, 1:, altemail, 
+GuiControl, 1:, location, 
+GuiControl, 1:, altlocation, 
+GuiControl, 1:, manager, 
+GuiControl, 1:, hr, 
+GuiControl, 1:, computer, 
+
+GuiControl, 1:, printer,
+GuiControl, 1:, server,
+GuiControl, 1:, screenshot, 0
+GuiControl, 1:, access,
+GuiControl, 1: Choose, Access, 3
+GuiControl, 1:, when, Unknown
+GuiControl, 1: Disable, when,
+GuiControl, 1:, affecteduser,
+GuiControl, 1:, errormessage, 
+GuiControl, 1:, affected,
+GuiControl, 1:, requester,
+GuiControl, 1: Choose, relist, 1
+GuiControl, 1:, requesting,
+GuiControl, 1:, notepad,
+
+Gui, 3:Destroy
+Return
+
+no:
+Gui, 3:Destroy
 Return
 
 load:
@@ -526,6 +552,26 @@ tiptodisplay:=randomlygeneratedpassword
 goto tipcycle
 Return
 
+tipstay:
+if (coordinatetoggle){
+	SetTimer, tipstaytimer, Delete
+	tiptodisplay:=""
+	ToolTip, %tiptodisplay%
+	MouseGetPos, mousex, mousey
+	IniWrite, %mousex%, %A_ScriptDir%\data\fetcher.ini, coordinates, %xstart%
+	IniWrite, %mousey%, %A_ScriptDir%\data\fetcher.ini, coordinates, %ystart%
+	tiptodisplay:=secondtip
+	SetTimer, tipstaytimer, on, 100
+} else {
+	SetTimer, tipstaytimer, Delete
+	tiptodisplay:=""
+	ToolTip, %tiptodisplay%
+	MouseGetPos, mousex, mousey
+	IniWrite, %mousex%, %A_ScriptDir%\data\fetcher.ini, coordinates, %xend%
+	IniWrite, %mousey%, %A_ScriptDir%\data\fetcher.ini, coordinates, %yend%
+}
+Return
+
 tipcycle:
 	if (tiplettercount<12){
 		tiplettercount=12
@@ -555,29 +601,29 @@ if (optiontoggle=0) {
 	fetcherspeed:=2
 	
 	Gui, 2:Add, Checkbox, x5 y6 w55 vfetchertoggle gfetchertoggle, Fetcher
-	Gui, 2:Add, Button, x60 y3 w35 gfetchersave vfetchersave, Save
-	Gui, 2:Add, Button, x95 y3 w35 gfetcherload vfetcherload, Load
+	Gui, 2:Add, Button, x60 y3 w35 Disabled gfetchersave vfetchersave, Save
+	Gui, 2:Add, Button, x95 y3 w35 Disabled gfetcherload vfetcherload, Load
 	
 	Gui, 2:Add, Text, x%gui2textrow% y33, Speed: 
-	Gui, 2:Add, Slider, x38 y30 w100 Range1-5 TickInterval vfetcherspeed, %fetcherspeed%
+	Gui, 2:Add, Slider, x38 y30 w100 Range1-5 TickInterval Disabled vfetcherspeed, %fetcherspeed%
 	
 	Gui, 2:Add, Text, x%gui2textrow% y62, First Name: - - - - -  
-	Gui, 2:Add, Button, x%gui2buttonrow% y60 w40 h20 vgui2firstname, Set
+	Gui, 2:Add, Button, x%gui2buttonrow% y60 w40 h20 Disabled ggui2firstname vgui2firstname, Set
 	
 	Gui, 2:Add, Text, x%gui2textrow% y82, Last Name: - - - - -  
-	Gui, 2:Add, Button, x%gui2buttonrow% y80 w40 h20 vgui2lastname, Set
+	Gui, 2:Add, Button, x%gui2buttonrow% y80 w40 h20 Disabled ggui2lastname vgui2lastname, Set
 	
 	Gui, 2:Add, Text, x%gui2textrow% y102, ID: - - - - - - - - - - - - 
-	Gui, 2:Add, Button, x%gui2buttonrow% y100 w40 h20 vgui2id, Set
+	Gui, 2:Add, Button, x%gui2buttonrow% y100 w40 h20 Disabled ggui2id vgui2id, Set
 	
 	Gui, 2:Add, Text, x%gui2textrow% y122, Phone Number: - -
-	Gui, 2:Add, Button, x%gui2buttonrow% y120 w40 h20 vgui2phonenumber, Set
+	Gui, 2:Add, Button, x%gui2buttonrow% y120 w40 h20 Disabled ggui2phonenumber vgui2phonenumber, Set
 	
 	Gui, 2:Add, Text, x%gui2textrow% y142, Email Address: - - - 
-	Gui, 2:Add, Button, x%gui2buttonrow% y140 w40 h20 vgui2email, Set
+	Gui, 2:Add, Button, x%gui2buttonrow% y140 w40 h20 Disabled ggui2email vgui2email, Set
 	
 	Gui, 2:Add, Text, x%gui2textrow% y162, Location: - - - - - - - 
-	Gui, 2:Add, Button, x%gui2buttonrow% y160 w40 h20 vgui2location, Set
+	Gui, 2:Add, Button, x%gui2buttonrow% y160 w40 h20 Disabled ggui2location vgui2location, Set
 	
 	WinGetPos, martix, martiy,,, MARTI
 	newx:=martix+903
@@ -592,6 +638,66 @@ if (optiontoggle=0) {
 } else if (optiontoggle=1){
 	goto gui2retract
 }
+Return
+
+gui2firstname:
+tiptodisplay:="Select First Name's Start Position"
+secondtip:="Select First Name's End Position"
+xstart:="firstnamexstart"
+ystart:="firstnameystart"
+xend:="fistnamexend"
+yend:="firstnameyend"
+SetTimer, tipstaytimer, on, 100
+Return
+
+gui2lastname:
+tiptodisplay:="Select Last Name's Start Position"
+secondtip:="Select Last Name's End Position"
+xstart:="lastnamexstart"
+ystart:="lastnameystart"
+xend:="lastnamexend"
+yend:="lastnameyend"
+SetTimer, tipstaytimer, on, 100
+Return
+
+gui2id:
+tiptodisplay:="Select ID's Start Position"
+secondtip:="Select ID's End Position"
+xstart:="idxstart"
+ystart:="idystart"
+xend:="idxend"
+yend:="idyend"
+SetTimer, tipstaytimer, on, 100
+Return
+
+gui2phonenumber:
+tiptodisplay:="Select Phoner Number's Start Position"
+secondtip:="Select Phone Number's End Position"
+xstart:="phonenumberxstart"
+ystart:="phonenumberystart"
+xend:="phonenumberxend"
+yend:="phonenumberyend"
+SetTimer, tipstaytimer, on, 100
+Return
+
+gui2email:
+tiptodisplay:="Select Email's Start Position"
+secondtip:="Select Email's End Position"
+xstart:="emailxstart"
+ystart:="emailystart"
+xend:="emailxend"
+yend:="emailyend"
+SetTimer, tipstaytimer, on, 100
+Return
+
+gui2location:
+tiptodisplay:="Select Location's Start Position"
+secondtip:="Select Location's End Position"
+xstart:="locationxstart"
+ystart:="locationystart"
+xend:="locationxend"
+yend:="locationyend"
+SetTimer, tipstaytimer, on, 100
 Return
 
 ;--------------------HOTKEYS--------------------
